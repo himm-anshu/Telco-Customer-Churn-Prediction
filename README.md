@@ -1,23 +1,25 @@
-# Telco Customer Churn Prediction
+# 📊 Telco Customer Churn Prediction using Machine Learning
 
-## 🤖 Project Overview
+## 📌 Project Overview
 
 This project develops a machine learning model to predict customer churn for a telecommunications company.
 
 The objective is to identify customers who are at higher risk of leaving so that the business can take proactive retention actions.
 
-The project follows an end-to-end machine learning workflow covering **exploratory data analysis, feature engineering, preprocessing, model comparison, hyperparameter tuning, ROC-AUC evaluation, threshold optimization, model interpretation, and business recommendations.**
+The project follows an end-to-end machine learning workflow covering:
+
+**Exploratory Data Analysis → Feature Engineering → Data Preprocessing → Model Development → Model Comparison → Hyperparameter Tuning → ROC-AUC Evaluation → Threshold Optimization → Model Interpretation → Business Insights → Retention Recommendations**
 
 ---
 
 ## 🎯 Business Problem
 
-Customer churn can have a significant impact on a telecom company's revenue and customer base.
+Customer churn can negatively impact a telecom company's revenue and customer base.
 
-The goal of this project is to answer:
+The goal of this project is to use customer data to answer questions such as:
 
 * Which customers are more likely to churn?
-* What customer characteristics are associated with higher churn risk?
+* Which customer characteristics are associated with higher churn risk?
 * Which machine learning model performs better?
 * How can the classification threshold be adjusted to identify more potential churners?
 * Which factors should the business focus on when designing retention strategies?
@@ -26,9 +28,9 @@ The goal of this project is to answer:
 
 ## 📊 Dataset
 
-The dataset contains **7,043 customer records and 21 columns**, covering customer demographics, services, contract information, payment methods, charges, and churn status.
+The dataset contains **7,043 customer records and 21 columns** covering customer demographics, services, contract information, payment methods, charges, and churn status.
 
-Key variables include:
+### Key Variables
 
 * Customer ID
 * Gender
@@ -36,12 +38,15 @@ Key variables include:
 * Partner
 * Dependents
 * Tenure
+* Phone Service
+* Multiple Lines
 * Internet Service
 * Online Security
 * Online Backup
 * Device Protection
 * Tech Support
-* Streaming Services
+* Streaming TV
+* Streaming Movies
 * Contract
 * Paperless Billing
 * Payment Method
@@ -66,17 +71,18 @@ The target variable is **Churn**.
 * **GridSearchCV**
 * **StandardScaler**
 * **OneHotEncoder**
+* **SimpleImputer**
 * **Pipeline**
 * **ColumnTransformer**
 * **Google Colab**
 
 ---
 
-## 🔄 Project Workflow
+# 🔄 Project Workflow
 
-### 1. Data Loading & Initial Inspection
+## 1. Data Loading & Initial Inspection
 
-The dataset was loaded using Pandas and inspected to understand:
+The dataset was loaded using Pandas and examined to understand:
 
 * Dataset dimensions
 * Data types
@@ -84,170 +90,266 @@ The dataset was loaded using Pandas and inspected to understand:
 * Numerical and categorical variables
 * Target distribution
 
-The customer ID was removed before machine learning because it does not provide meaningful predictive information.
+The original dataset contained **7,043 rows and 21 columns**.
+
+The `customerID` column was removed because it is an identifier and does not provide meaningful predictive information.
+
+After removing it, the machine learning dataset contained **20 features**.
 
 ---
 
-### 2. Exploratory Data Analysis
+## 2. Exploratory Data Analysis
 
-The analysis examined churn across important customer characteristics.
+The analysis examined the distribution of churn and explored churn patterns across important customer characteristics.
 
-#### Churn Distribution
+### Churn Distribution
 
 The dataset contains:
 
 * **5,174 customers who did not churn**
 * **1,869 customers who churned**
 
-This corresponds to an overall churn rate of approximately **26.54%**.
+The overall churn rate was approximately:
 
-#### Churn by Contract
+**26.54%**
 
-Month-to-month customers showed the highest churn rate:
+### Churn by Contract
 
-* Month-to-month: **42.71%**
-* One year: **11.27%**
-* Two year: **2.83%**
+Month-to-month customers showed substantially higher churn:
 
-#### Churn by Internet Service
+| Contract       | Churn Rate |
+| -------------- | ---------: |
+| Month-to-month | **42.71%** |
+| One year       | **11.27%** |
+| Two year       |  **2.83%** |
 
-* Fiber optic: **41.89%**
-* DSL: **18.96%**
-* No internet service: **7.40%**
+This indicates a strong relationship between contract duration and churn.
 
-#### Churn by Payment Method
+### Churn by Internet Service
 
-Electronic check customers showed the highest churn rate at approximately **45.29%**.
+| Internet Service    | Churn Rate |
+| ------------------- | ---------: |
+| DSL                 | **18.96%** |
+| Fiber optic         | **41.89%** |
+| No internet service |  **7.40%** |
+
+Fiber optic customers showed the highest churn rate among the three groups.
+
+### Churn by Payment Method
+
+| Payment Method            | Churn Rate |
+| ------------------------- | ---------: |
+| Bank transfer (automatic) | **16.71%** |
+| Credit card (automatic)   | **15.24%** |
+| Electronic check          | **45.29%** |
+| Mailed check              | **19.11%** |
+
+Electronic check customers showed the highest churn rate.
 
 ---
 
-## ⚙️ Feature Engineering
+## 3. Feature Engineering
 
-A new feature called **AvgMonthlySpend** was created using:
+A new feature called **AvgMonthlySpend** was created to represent the customer's average monthly spending over their tenure.
+
+It was calculated using:
 
 `TotalCharges / tenure`
 
-This feature was added to provide an additional measure of the customer's average spending over their tenure.
+To avoid division by zero, customers with **tenure = 0** were handled by replacing zero tenure with `NaN`.
 
-Zero-tenure customers were handled so that division by zero would not occur.
+These customers also had `TotalCharges = 0`, resulting in `NaN` for `AvgMonthlySpend`.
+
+The resulting feature was included as an additional numerical variable in the machine learning preprocessing pipeline.
 
 ---
 
-## 🧹 Data Preprocessing
+## 4. Feature & Target Preparation
+
+The dataset was separated into:
+
+* **X:** Predictor variables
+* **y:** Target variable (`Churn`)
+
+The target was converted from:
+
+* `No → 0`
+* `Yes → 1`
+
+The final dataset contained:
+
+* **7,043 observations**
+* **20 predictor variables**
+
+---
+
+## 5. Train-Test Split
+
+The dataset was divided into training and testing sets using an **80/20 split**.
+
+`random_state=42` was used to ensure reproducibility.
+
+Stratified sampling was applied to maintain the churn distribution across the training and testing sets.
+
+| Dataset  |   Records |
+| -------- | --------: |
+| Training | **5,634** |
+| Testing  | **1,409** |
+
+---
+
+## 6. Data Preprocessing
 
 A Scikit-learn preprocessing pipeline was created to handle numerical and categorical variables.
 
 ### Numerical Features
 
-Numerical variables were:
+Numerical features were:
 
 * Median imputed
 * Standardized using `StandardScaler`
 
 ### Categorical Features
 
-Categorical variables were:
+Categorical features were:
 
 * Most-frequent imputed
 * Encoded using `OneHotEncoder`
 
-The preprocessing and model were combined using a **Pipeline** and **ColumnTransformer**.
+The preprocessing steps were combined using:
+
+* `Pipeline`
+* `ColumnTransformer`
+
+This ensured that preprocessing was applied consistently during model training and prediction.
 
 ---
 
-## 🤖 Model Development
+# 🤖 7. Model Development
 
-Two classification models were developed and compared:
+Two classification models were developed and evaluated.
 
-### Logistic Regression
+## Logistic Regression
 
-A Logistic Regression model was used as the primary linear classification model.
+Logistic Regression was used as the primary linear classification model.
 
-### Random Forest
+Initial test performance:
 
-A Random Forest classifier with **200 estimators** was also trained for comparison.
+* **Accuracy:** 80.55%
+* **Churn Precision:** 66%
+* **Churn Recall:** 56%
+* **Churn F1-score:** 60%
 
-The models were evaluated using:
+Confusion matrix at the default threshold of 0.50:
 
-* Accuracy
-* Precision
-* Recall
-* F1-score
-
-Because the primary business objective is to identify customers at risk of churn, particular attention was given to the **Churn class recall and F1-score**.
-
----
-
-## 📊 Model Comparison
-
-Logistic Regression performed better than Random Forest on the evaluated metrics.
-
-| Model               | Accuracy | Churn Precision | Churn Recall | Churn F1 |
-| ------------------- | -------: | --------------: | -----------: | -------: |
-| Logistic Regression |   0.8055 |            0.66 |         0.56 |     0.60 |
-| Random Forest       |   0.7850 |            0.62 |         0.48 |     0.54 |
-
-Based on this comparison, Logistic Regression was selected for further optimization.
+```text
+[[926 109]
+ [165 209]]
+```
 
 ---
 
-## 🎛️ Hyperparameter Tuning
+## Random Forest
 
-GridSearchCV was used to tune the Logistic Regression regularization parameter `C`.
+A Random Forest classifier was also developed using:
 
-Tested values:
+`n_estimators = 200`
 
-`[0.01, 0.1, 1, 10, 100]`
+Performance:
+
+* **Accuracy:** 78.50%
+* **Churn Precision:** 62%
+* **Churn Recall:** 48%
+* **Churn F1-score:** 54%
+
+---
+
+# 📊 8. Model Comparison
+
+The two models were compared using accuracy, precision, recall, and F1-score for the churn class.
+
+| Model                   |   Accuracy | Churn Precision | Churn Recall | Churn F1 |
+| ----------------------- | ---------: | --------------: | -----------: | -------: |
+| **Logistic Regression** | **0.8055** |        **0.66** |     **0.56** | **0.60** |
+| Random Forest           |     0.7850 |            0.62 |         0.48 |     0.54 |
+
+### Model Selection
+
+Logistic Regression performed better across the evaluated metrics and was therefore selected for further optimization.
+
+---
+
+# 🎛️ 9. Hyperparameter Tuning
+
+`GridSearchCV` was used to tune the Logistic Regression regularization parameter `C`.
+
+The following values were tested:
+
+```text
+[0.01, 0.1, 1, 10, 100]
+```
 
 The best parameter was:
 
 **C = 1**
 
-The best cross-validation F1-score was approximately:
+The best cross-validation F1-score was:
 
-**0.599**
+**0.5988**
 
-The tuned Logistic Regression model achieved approximately:
+The tuned Logistic Regression model achieved:
 
-**80.55% accuracy** on the test set.
+**80.55% test accuracy**
+
+with the default classification threshold of 0.50.
 
 ---
 
-## 📈 ROC-AUC Evaluation
+# 📈 10. ROC-AUC Evaluation
 
-The tuned model achieved an:
+The tuned Logistic Regression model achieved:
 
-### **ROC-AUC = 0.842**
+## **ROC-AUC = 0.8422**
 
 This indicates that the model has good ability to distinguish between customers who churn and customers who do not churn.
 
+The ROC-AUC metric evaluates the model's ranking ability independently of a specific classification threshold.
+
+### ROC Curve
+
+![ROC Curve](roc_curve.png)
+
 ---
 
-## 🎯 Threshold Optimization
+# 🎯 11. Threshold Optimization
 
 The default classification threshold of **0.50** was evaluated against lower thresholds.
 
 | Threshold | Precision |   Recall |       F1 |
 | --------: | --------: | -------: | -------: |
-|      0.30 |      0.52 | **0.76** | **0.62** |
+|      0.30 |  **0.52** | **0.76** | **0.62** |
 |      0.35 |      0.54 |     0.71 |     0.61 |
 |      0.40 |      0.57 |     0.67 |     0.61 |
 |      0.45 |      0.60 |     0.62 |     0.61 |
 |      0.50 |      0.66 |     0.56 |     0.60 |
 
-A threshold of **0.30** was selected as the final threshold.
+A threshold of **0.30** was selected as the final threshold because the business objective is to identify more customers who are at risk of churning.
 
-This increased churn recall from **56% to 76%**, allowing the model to identify more customers who actually churned.
+This increased churn recall from:
 
-The trade-off was lower precision, meaning more non-churning customers were also flagged as potential churners.
+**56% → 76%**
+
+The trade-off was lower precision, meaning that more non-churning customers would also be flagged for potential retention actions.
 
 ---
 
-## 🔎 Model Interpretation
+# 🔎 12. Model Interpretation
 
 The final Logistic Regression model produced **46 transformed features** after preprocessing.
 
-The strongest positive coefficients associated with churn included:
+### Features Positively Associated with Churn
+
+The strongest positive coefficients included:
 
 * Fiber optic internet service
 * Month-to-month contracts
@@ -255,66 +357,101 @@ The strongest positive coefficients associated with churn included:
 * Electronic check payment
 * Streaming TV
 * Streaming Movies
-* Lack of online security
-* Lack of technical support
+* No online security
+* No technical support
+* Multiple lines
+* Senior citizen status
 
-Strong negative coefficients included:
+### Features Negatively Associated with Churn
+
+The strongest negative coefficients included:
 
 * Tenure
 * Two-year contracts
 * DSL internet service
 * Monthly Charges
-* Paperless billing set to No
+* Paperless Billing = No
+* No internet service
+* No online security/internet service
+* Having dependents
+* Automatic credit-card payment
 
-The coefficient analysis was used to understand which transformed features were associated with higher or lower churn risk.
+Coefficient analysis was used to understand which transformed features were associated with higher or lower churn risk.
+
+> **Note:** Logistic Regression coefficients represent associations within the fitted model and should not automatically be interpreted as causal relationships.
 
 ---
 
-## 📌 Final Model Evaluation
+# 🏁 13. Final Model Evaluation
 
-At the selected threshold of **0.30**, the final model achieved:
+The final model used the optimized classification threshold of **0.30**.
 
-* **Churn Precision:** 0.52
-* **Churn Recall:** 0.76
-* **Churn F1-score:** 0.62
-* **Overall Accuracy:** 0.75
+### Final Performance
 
-The final confusion matrix was:
+* **Accuracy:** 75%
+* **Churn Precision:** 52%
+* **Churn Recall:** 76%
+* **Churn F1-score:** 62%
+* **ROC-AUC:** 0.8422
+
+### Final Confusion Matrix
 
 ```text
 [[774 261]
  [ 91 283]]
 ```
 
-This means the model correctly identified **283 of the 374 actual churners**.
+The model correctly identified:
 
-The lower threshold prioritizes identifying more potential churners, which can be useful in a retention-focused business scenario.
+**283 out of 374 actual churners.**
 
----
+That corresponds to a churn recall of approximately **76%**.
 
-## 💡 Business Insights
+The lower classification threshold prioritizes identifying more potential churners, which can be useful when the cost of missing a high-risk customer is greater than the cost of contacting some customers who ultimately do not churn.
 
-The analysis identified several important churn patterns:
+### Confusion Matrix
 
-1. **Month-to-month customers showed substantially higher churn risk** compared with customers on longer-term contracts.
-
-2. **Fiber optic customers showed higher churn association** compared with the reference category.
-
-3. **Shorter-tenure customers were more associated with churn**, while longer tenure was strongly associated with lower churn risk.
-
-4. **Two-year contract customers showed substantially lower churn association.**
-
-5. **Electronic check users showed the highest churn rate** among the payment methods analyzed.
+![Final Confusion Matrix](confusion_matrix.png)
 
 ---
 
-## 🚀 Business Recommendations
+# 💡 14. Business Insights
 
-Based on the analysis:
+The analysis and model interpretation identified several important churn patterns:
+
+### 1. Month-to-Month Customers Have Higher Churn Risk
+
+Month-to-month customers had a churn rate of **42.71%**, substantially higher than one-year and two-year contract customers.
+
+### 2. Fiber Optic Customers Show Higher Churn
+
+Fiber optic customers had a churn rate of approximately **41.89%**, considerably higher than DSL customers.
+
+### 3. Shorter Tenure Is Associated with Higher Churn
+
+Tenure had one of the strongest negative coefficients in the Logistic Regression model, indicating that longer-tenure customers were strongly associated with lower churn risk.
+
+### 4. Two-Year Contracts Are Associated with Lower Churn
+
+Two-year contract customers had a churn rate of only **2.83%**, compared with **42.71%** for month-to-month customers.
+
+### 5. Electronic Check Customers Show Higher Churn
+
+Electronic check customers had a churn rate of approximately **45.29%**, the highest among the payment methods analyzed.
+
+### 6. Support and Security Services Matter
+
+Customers without online security and technical support showed positive associations with churn in the model.
+
+---
+
+# 🚀 15. Business Recommendations
+
+Based on the analysis, the following retention strategies could be considered:
 
 ### 1. Encourage Longer-Term Contracts
 
-Offer targeted incentives to month-to-month customers to encourage movement toward one-year or two-year contracts.
+Offer targeted incentives to month-to-month customers to encourage migration toward one-year or two-year contracts.
 
 ### 2. Focus on Newer Customers
 
@@ -322,34 +459,65 @@ Prioritize retention efforts for customers with shorter tenure, particularly dur
 
 ### 3. Investigate Fiber Optic Churn
 
-Investigate service quality, pricing, and customer support issues among fiber optic customers.
+Investigate service quality, pricing, customer experience, and support issues among fiber optic customers.
 
 ### 4. Promote Support & Security Services
 
-Consider targeted support or security bundles for customers who do not currently use services such as online security and technical support.
+Consider targeted bundles or incentives for customers who do not currently use online security or technical support.
 
-### 5. Use the Model for Proactive Retention
+### 5. Review Electronic Check Customers
 
-Customers above the selected churn probability threshold can be prioritized for retention campaigns, allowing the business to focus resources on customers with higher predicted churn risk.
+Investigate whether the electronic check payment journey, billing experience, or customer characteristics are contributing to the higher churn rate.
 
----
+### 6. Use the Model for Proactive Retention
 
-## 📁 Repository Contents
+Customers with predicted churn probabilities above the selected **0.30 threshold** can be prioritized for retention campaigns.
 
-| File                                    | Description                          |
-| --------------------------------------- | ------------------------------------ |
-| `Telco_Customer_Churn_Prediction.ipynb` | Complete machine learning workflow   |
-| `telco_churn_cleaned.csv`               | Cleaned dataset used by the notebook |
-| `confusion_matrix.png`                  | Final model confusion matrix         |
-| `roc_curve.png`                         | ROC curve and AUC visualization      |
-| `README.md`                             | Project documentation                |
+This allows the business to focus retention resources on customers who are more likely to churn.
 
 ---
 
-## 🧠 Key Takeaway
+# 📁 16. Repository Contents
 
-This project demonstrates how machine learning can be used not only to predict customer churn, but also to support business decision-making.
+| File                                    | Description                        |
+| --------------------------------------- | ---------------------------------- |
+| `Telco_Customer_Churn_Prediction.ipynb` | Complete machine learning workflow |
+| `telco_churn_cleaned.csv`               | Cleaned dataset used for analysis  |
+| `confusion_matrix.png`                  | Final model confusion matrix       |
+| `roc_curve.png`                         | ROC curve and AUC visualization    |
+| `README.md`                             | Project documentation              |
 
-The final Logistic Regression model achieved an **ROC-AUC of 0.842**. More importantly, threshold optimization demonstrated how changing the classification threshold can prioritize **higher churn recall**, enabling the business to identify more potential churners for proactive retention.
+---
 
-The project combines **machine learning, model evaluation, interpretability, and business thinking** to turn customer data into actionable retention strategies.
+# 🧠 17. Conclusion
+
+This project developed a machine learning solution for predicting customer churn using the Telco Customer Churn dataset.
+
+The workflow covered the complete process from **data exploration and feature engineering to model development, evaluation, interpretation, and business recommendations**.
+
+Logistic Regression outperformed Random Forest during model comparison, achieving:
+
+**80.55% accuracy** and **0.8422 ROC-AUC** at the default classification threshold.
+
+Threshold optimization demonstrated the importance of aligning model predictions with business objectives. By reducing the threshold from **0.50 to 0.30**, churn recall increased from **56% to 76%**, allowing the model to correctly identify **283 of the 374 actual churners**.
+
+The model interpretation highlighted important churn-associated factors such as:
+
+* Month-to-month contracts
+* Fiber optic service
+* Electronic check payments
+* Shorter tenure
+* Lack of online security
+* Lack of technical support
+
+These insights can help a telecom company prioritize high-risk customers and develop targeted retention strategies.
+
+Overall, the project demonstrates how **machine learning, model interpretation, and business analysis** can be combined to transform customer data into actionable retention decisions.
+
+---
+
+## ⭐ Key Takeaway
+
+> **The goal is not simply to predict who will churn — it is to identify actionable patterns and use those predictions to support better customer retention decisions.**
+
+---
